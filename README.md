@@ -514,4 +514,209 @@ I/flutter ( 8208): LOAD_BALANCER_LOG: [19:22:27] 🎯 [Response]: Node A process
 ```
 
 
+---
+
+## 🛜 Task 5: Real-Time WebSocket State Sync Gate (Token Bucket Rate Limiting)
+
+### 📌 Core Architectural Concepts
+
+In microservice environments and decoupled distributed systems, high concurrency state mutations can accidentally expose internal endpoints to high volume cascades, starvation loops, or outright distributed resource exhausting crashes (**DDoS**). To shield downstream processing queues and data pools from volatile sync traffic overhead, this task deploys a strict client-side **Ingress Gatekeeper Subsystem** governed by the industry-standard **Token Bucket Algorithm**.
+
+```text
+  [ Inbound Client Sync Actions ]
+                 │
+                 ▼
+       ┌──────────────────┐
+       │ Ingress Sync Gate│ <─── [ Background Refill Engine ]
+       └────────┬─────────┘       (Generates +1 Token / Second)
+                │
+        ⚡ Is Token > 0?
+        ───────┬───────
+               │
+       ┌───────┴───────┐
+      YES              NO
+       ▼               ▼
+[ Allow Action ] [ Load Shedding ]
+Token Consumed   Packet Dropped (429)
+```
+## Token Bucket Rate Limiting Layer
+
+### Overview
+
+The system incorporates a **Token Bucket** rate-limiting mechanism to protect backend services from excessive request bursts and to ensure controlled traffic flow through the synchronization gateway.
+
+---
+
+### Bucket Capacity Constraint
+
+A virtual bucket is initialized with a fixed maximum token capacity:
+
+```math
+Bucket\ Capacity\ (C) = 5
+```
+
+Where:
+
+* **C** represents the maximum number of tokens that can be stored simultaneously.
+* Each token grants permission for a single request to pass through the gateway.
+
+---
+
+### Token Consumption Policy
+
+Whenever a user initiates a mutation operation, such as:
+
+* Stock quantity updates
+* Bulk invoice synchronization
+* Inventory reconciliation requests
+* Data synchronization transactions
+
+the gateway consumes exactly one token from the bucket.
+
+```math
+Tokens_{remaining} = Tokens_{current} - 1
+```
+
+A request is processed only if at least one token is available at the time of execution.
+
+---
+
+### Load Shedding Mechanism
+
+When incoming traffic exceeds the bucket's available token count, the gateway immediately activates a **Load Shedding** strategy.
+
+If:
+
+```math
+Tokens = 0
+```
+
+then all subsequent incoming requests are rejected until new tokens become available.
+
+This prevents:
+
+* Resource exhaustion
+* Backend congestion
+* Cascading service failures
+* Excessive synchronization bursts
+
+Requests are dropped locally before reaching downstream services, minimizing unnecessary network overhead.
+
+---
+
+### Continuous Token Refill
+
+A dedicated low-priority asynchronous background task continuously replenishes the bucket at a fixed rate.
+
+#### Refill Velocity
+
+```math
+Refill\ Rate\ (r) = 1\ Token/Second
+```
+
+The refill process follows:
+
+```math
+Tokens_{new} = \min(C,\ Tokens_{current} + r)
+```
+
+Where:
+
+* **C** = Bucket Capacity
+* **r** = Refill Rate
+
+This guarantees that the bucket never exceeds its maximum capacity while steadily restoring request-processing capability.
+
+---
+
+### Benefits
+
+The Token Bucket implementation provides:
+
+* Burst traffic control
+* Protection against accidental request flooding
+* Lightweight DDoS mitigation
+* Fair resource allocation
+* Automatic system recovery
+* Stable throughput under fluctuating workloads
+
+---
+
+## Technical Implementation
+
+### Background Refill Daemon
+
+A dedicated asynchronous timer continuously executes in the background and replenishes the token bucket every second.
+
+Responsibilities include:
+
+1. Monitoring current token availability.
+2. Restoring depleted capacity.
+3. Updating reactive UI telemetry.
+4. Maintaining system responsiveness during heavy traffic scenarios.
+
+---
+
+
+
+### 📸 Task 4 Execution & Visual Evidence
+* <p align="center">
+  <img src="Images/img_14.png" width="31%" alt="Optimistic UI Launch" />
+  <img src="Images/img_15.png" width="31%" alt="Jittered Backoff Log" />
+  <img src="Images/img_16.png" width="31%" alt="Rollback Mechanism" />
+</p>
+
+### 🖥️ Real-Time Execution Trace Analysis (LOAD BALANCER)
+```text
+
+```
+
+The integrated gateway terminal displays live transaction events and bucket status updates.
+
+### Normal Operation
+
+```text
+Request #1 → Token Consumed
+Request #2 → Token Consumed
+Request #3 → Token Consumed
+Request #4 → Token Consumed
+Request #5 → Token Consumed
+```
+
+### Bucket Depletion
+
+```text
+Available Tokens: 0
+
+Request #6 → Rejected
+Request #7 → Rejected
+Request #8 → Rejected
+```
+
+### Load Shedding Activated
+
+```text
+[SYNC GATE]
+Bucket Empty
+
+Load Shedding Enabled
+Overflow Requests Dropped
+```
+
+### Automatic Recovery
+
+```text
++1 Token Refilled
+Current Tokens: 1
+
+Request Accepted
+
++1 Token Refilled
+Current Tokens: 2
+```
+
+This execution pattern demonstrates the complete lifecycle of the Token Bucket mechanism, including request authorization, bucket depletion, overload protection, and automated recovery through periodic token replenishment.
+
+
+
 
