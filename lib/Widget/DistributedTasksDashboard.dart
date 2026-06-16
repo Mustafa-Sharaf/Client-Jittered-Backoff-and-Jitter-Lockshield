@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:taskone/Real-Time-WebSocket-State-Sync-Gate/rate_limiter_Screen.dart';
 
 import '../CircuitBreaker/CircuitBreakerScreen.dart';
 import '../Client-Jittered-Backoff-and-Jitter-Lockshield/JitterBackoffScreen.dart';
@@ -100,6 +101,24 @@ class DistributedTasksDashboard extends StatelessWidget {
                 onTap: () => Get.to(() => LoadBalancerScreen()),
               ),
             ),
+
+
+            Card(
+              elevation: 4,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Color(0xff0aa87d),
+                  foregroundColor: Colors.white,
+                  child: const Text('5'),
+                ),
+                title: const Text('WebSocket Sync Gate', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Adaptive Frontend Load Balancer Logic'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => Get.to(() => RateLimiterScreen()),
+              ),
+            ),
+
+
 
 
 
