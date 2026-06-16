@@ -16,7 +16,8 @@ This repository contains an advanced, production-grade practical implementation 
 Below is the core mobile architecture control layer designed to dynamically simulate client-server network chaos, failures, and recovery strategies across all implemented distributed patterns:
 
 <p align="center">
-  <img src="Images/lab_dashboard.jpg" width="40%" alt="Distributed Systems Lab Dashboard" />
+
+  <img src="Images/img_13.png" width="31%" alt="Distributed Systems Lab Dashboard" />
 </p>
 
 ---
