@@ -661,9 +661,10 @@ Responsibilities include:
 
 ### 📸 Task 4 Execution & Visual Evidence
 * <p align="center">
-  <img src="Images/img_14.png" width="31%" alt="Optimistic UI Launch" />
-  <img src="Images/img_15.png" width="31%" alt="Jittered Backoff Log" />
-  <img src="Images/img_16.png" width="31%" alt="Rollback Mechanism" />
+  <img src="Images/img_17.png" width="31%" alt="Optimistic UI Launch" />
+  <img src="Images/img_18.png" width="31%" alt="Jittered Backoff Log" />
+  <img src="Images/img_19.png" width="31%" alt="Rollback Mechanism" />
+  <img src="Images/img_20.png" width="31%" alt="Rollback Mechanism" />
 </p>
 
 ### 🖥️ Real-Time Execution Trace Analysis (LOAD BALANCER)
