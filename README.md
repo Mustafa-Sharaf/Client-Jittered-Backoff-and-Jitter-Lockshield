@@ -164,4 +164,103 @@ I/flutter (31981): CIRCUIT_LOG: [08:32:43] 💚 [Recovery]: Test passed! Circuit
 
 ---
 ```
+---
+
+## 🛰️ Task 3: Resilient Microservice Heartbeat & Probing Monitor
+
+### 📌 Core Architectural Concepts
+
+In microservice-oriented architectures, determining the immediate availability of decentralized downstream dependencies is crucial to preventing silent service degradation. Naive connection monitoring can over-saturate networks, while late detection leads to data black holes.
+
+To decouple network telemetry from user-driven runtime paths, this project implements a **Resilient Heartbeat & Active Probing Monitor**. The system models a real-time health daemon tracking multiple mock microservices concurrently via a background daemon loop, executing according to strict distributed telemetry boundaries:
+
+```text
+  [ Client Dashboard Daemon ]
+              │
+              ├───( Every 3s: HTTP GET / )───> [ Port 8081: Warehouse Service ]   ──> HEALTHY 🟢
+              │
+              ├───( Every 3s: HTTP GET / )───> [ Port 8082: Fleet Service ]       ──> HEALTHY 🟢
+              │
+              └───( Every 3s: HTTP GET / )───> [ Port 8083: Procurement Service ] ──> DEAD 🔴 (Stopped)
+```
+### 📌 Core Architectural Concepts
+
+#### 1. Periodic Active Probing (Heartbeat Thread)
+
+The client monitoring subsystem maintains an asynchronous background heartbeat process that continuously probes all registered microservice endpoints at a fixed interval:
+
+$$
+\Delta t = 3 \text{ seconds}
+$$
+
+Each probe attempts to establish a transport-layer connection and validate service responsiveness.
+
+To guarantee rapid fault detection and prevent client-side resource starvation, the network timeout threshold is strictly bounded:
+
+$$
+\tau_{network} \leq 2 \text{ seconds}
+$$
+
+Any endpoint failing to respond within the allocated timeout window is immediately classified as unavailable.
+
+This strategy prevents socket exhaustion, blocked I/O operations, and thread pool congestion when interacting with crashed or unreachable services.
+
+#### 2. Fault Isolation & Health Demarcation
+
+The monitoring engine maintains an independent health profile for each microservice instance.
+
+**HEALTHY 🟢**
+
+* Successfully completes the transport-layer handshake.
+* Returns a valid HTTP `200 OK` response.
+* Produces the expected heartbeat payload (`PONG`).
+
+**DEAD 🔴**
+
+* Connection timeout exceeds the configured threshold.
+* Transport-layer connection reset occurs.
+* Administrative shutdown returns an HTTP `503 Service Unavailable` response.
+
+The architecture enforces complete fault isolation between monitored services. Failure of a single node does not influence heartbeat evaluation, telemetry collection, or routing decisions associated with neighboring nodes.
+
+#### 3. Controlled Chaos Simulation (Failure Injector)
+
+To emulate realistic distributed infrastructure failures, the monitoring dashboard incorporates administrative control switches capable of selectively terminating and restoring individual backend nodes.
+
+Supported simulation targets include:
+
+* Port 8081
+* Port 8082
+* Port 8083
+
+This mechanism functions as a lightweight chaos-engineering environment, enabling validation of automatic fault detection, service recovery, and monitoring resilience under controlled failure conditions.
+
+---
+
+### 🖥️ Implementation Specifications (Flutter & GetX Daemon)
+
+* **Multi-Port Backend Simulation:** Leveraged Dart's embedded `HttpServer` infrastructure to instantiate and manage three independent microservice instances concurrently within the local execution environment.
+* **Reactive Telemetry Interception:** Service health indicators (`isHealthy`, `statusText`, `logs`) are fully synchronized through GetX reactive observables (`.obs`), providing instantaneous dashboard updates without manual UI refresh operations.
+* **Background Monitoring Daemon:** Heartbeat scheduling and health evaluation execute continuously in the background, ensuring near real-time visibility into service availability.
+
+---
+
+### 📸 Task 3 Execution & Visual Evidence
+* <p align="center">
+  <img src="Images/img_7.png" width="31%" alt="Optimistic UI Launch" />
+  <img src="Images/img_8.png" width="31%" alt="Jittered Backoff Log" />
+  <img src="Images/img_9.png" width="31%" alt="Rollback Mechanism" />
+  <img src="Images/img_10.png" width="31%" alt="Rollback Mechanism" />
+  <img src="Images/img_11.png" width="31%" alt="Rollback Mechanism" />
+</p>
+
+To demonstrate monitoring precision and recovery behavior, screenshots capture the complete operational lifecycle:
+
+**Full Cluster Stability → Targeted Node Failure → Automated Detection → Service Restoration**
+
+---
+
+### 🖥️ Real-Time Execution Trace Analysis (Heartbeat Logs)
+
+Below is an authentic execution trace captured from the integrated monitoring terminal, illustrating periodic heartbeat probes, immediate fault identification, service state transitions, and automated recovery recognition following administrative chaos injections.
 
