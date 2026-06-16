@@ -322,3 +322,154 @@ I/flutter (31981): HEARTBEAT_LOG: [09:23:22] 💓 [Heartbeat]: Ping to Warehouse
 ---
 ```
 
+
+---
+
+## ⚖️ Task 4: Adaptive Frontend Load Balancer Logic
+
+### 📌 Core Architectural Concepts
+
+In massive high-throughput distributed architectures, a standalone backend instance cannot reliably sustain parallel synchronized user queries without suffering performance degradation or ultimate service failure. To prevent catastrophic crash states and distribute processing strain symmetrically, this project implements a client-side **Ingress Load Balancer Subsystem** orchestrating traffic steering across three active mock server nodes (`Node A`, `Node B`, and `Node C`).
+
+The infrastructure supports two distinct algorithmic load distribution paradigms:
+
+```text
+       [ Incoming Medicine Request ]
+                     │
+                     ▼
+       ┌───────────────────────────┐
+       │ Ingress Policy Router     │
+       │ (Round Robin / Adaptive)  │
+       └─────────────┬─────────────┘
+                     │
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+  [ Port 8091 ] [ Port 8092 ] [ Port 8093 ]
+    Node A        Node B        Node C
+   (15-45ms)     (40-90ms)    (80-230ms)
+```
+
+# Adaptive Load Balancer Engine
+
+## Load Balancing Strategies
+
+### 1. Symmetrical Round Robin Policy
+
+#### Concept
+
+Distributes incoming requests across available server replicas sequentially and cyclically without considering current runtime conditions or node performance metrics.
+
+#### Mathematical Foundation
+
+Target service nodes are selected deterministically using modulo arithmetic based on the cumulative request index (**R**):
+
+```math
+Target\ Node\ Index = R \bmod N
+```
+
+Where:
+
+* **R** = Total number of dispatched requests.
+* **N** = Total number of healthy cluster nodes.
+
+For this implementation:
+
+```math
+N = 3
+```
+
+This policy guarantees an even distribution of traffic across all backend replicas, assuming equivalent processing capacity among the nodes.
+
+---
+
+### 2. Adaptive Telemetry Feedback Policy
+
+#### Concept
+
+A dynamic traffic-steering mechanism that continuously monitors runtime telemetry from all cluster nodes. The ingress controller periodically evaluates response latency and routes incoming requests toward the most responsive endpoint.
+
+#### Mathematical Selection
+
+For each incoming request, the target node is selected using a minimum-latency evaluation:
+
+```math
+Target\ Node = \min(Latency_A,\ Latency_B,\ Latency_C)
+```
+
+#### Traffic Steering Behavior
+
+This strategy automatically shifts workload away from congested or resource-constrained nodes and redirects traffic toward the fastest available replica, improving:
+
+* Response time
+* Resource utilization
+* System resilience
+* Overall cluster longevity
+
+---
+
+## Technical Architecture
+
+### Multi-Instance Ingress Simulation
+
+The system deploys three independent backend replicas using Dart `HttpServer` instances running on local loopback ports:
+
+| Node   | Port |
+| ------ | ---- |
+| Node A | 8091 |
+| Node B | 8092 |
+| Node C | 8093 |
+
+Each server instance operates independently to simulate a distributed cluster environment with isolated request handling.
+
+---
+
+### Reactive State Management
+
+The application leverages **GetX** for state synchronization.
+
+All telemetry metrics, latency measurements, request counters, and routing events are attached to reactive observables (`.obs`), enabling:
+
+* Automatic UI synchronization
+* Complete separation of business logic and presentation layers
+* Elimination of manual widget refresh mechanisms
+* Real-time telemetry visualization
+
+---
+
+## Real-Time Execution Trace Analysis
+
+The integrated routing terminal provides a live execution stream that visualizes request dispatch operations in real time.
+
+Observed behavior:
+
+### Round Robin Mode
+
+Requests are distributed cyclically:
+
+```text
+Request #1 → Node A
+Request #2 → Node B
+Request #3 → Node C
+Request #4 → Node A
+Request #5 → Node B
+...
+```
+
+### Adaptive Telemetry Feedback Mode
+
+When latency variations occur, traffic is dynamically redirected toward the node exhibiting the lowest response time.
+
+Example:
+
+```text
+Node A → 40ms
+Node B → 120ms
+Node C → 180ms
+
+Selected Target → Node A
+```
+
+This demonstrates the ability of the load balancer to make intelligent routing decisions based on real-time cluster telemetry rather than static scheduling rules.
+
+
+
