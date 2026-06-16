@@ -36,8 +36,29 @@ To prevent **Race Conditions** where a user might trigger multiple mutations on 
 * **State Management:** Driven by reactive programming (`RxList`, `RxMap`) via **GetX** for immediate UI synchronization.
 * **Distributed Simulation Terminal:** Built an in-app real-time terminal logging subsystem that precisely documents timing, exponential step increments, jitter intervals, locking mechanisms, and rollback triggers.
 * **Fault Simulation:** Implemented a non-deterministic RPC mock layer with a $75\%$ failure rate to rigorously test the client-side resiliency logic under extreme network stress.
+* 
+### 📸 Execution & Visual Evidence
+*(Insert your project screenshots in this section to demonstrate your live output to the reviewer)*
+* <p align="center">
+  <img src="Images/img.png" width="31%" alt="Optimistic UI Launch" />
+  <img src="Images/img_1.png" width="31%" alt="Jittered Backoff Log" />
+  <img src="Images/img_2.png" width="31%" alt="Rollback Mechanism" />
+</p>
+
+### 🖥️ Real-Time Execution Trace Analysis (Live Logs)
+
+Below is an authentic execution trace captured from the Flutter development terminal, showcasing the system's asynchronous handling of multiple concurrent pharmaceutical orders under network stress:
+
+```text
+I/flutter (31981): DISTRIBUTED_LOG: [Optimistic UI]: The interface was updated immediately upon request Panadol Extra
+I/flutter (31981): DISTRIBUTED_LOG: 📡 Demand 1781583050646: Attempt number (1) from (4)...
+I/flutter (31981): DISTRIBUTED_LOG: [Optimistic UI]: The interface was updated immediately upon request Lipitor 20mg
+I/flutter (31981): DISTRIBUTED_LOG: 📡 Demand 1781583050848: Attempt number (1) from (4)...
+I/flutter (31981): DISTRIBUTED_LOG: [Optimistic UI]: The interface was updated immediately upon request Lipitor 20mg
+I/flutter (31981): DISTRIBUTED_LOG: 📡 Demand 1781583051013: Attempt number (1) from (4)...
+I/flutter (31981): DISTRIBUTED_LOG: [Optimistic UI]: The interface was updated immediately upon request Panadol Extra
+I/flutter (31981): DISTRIBUTED_LOG: ❌ [Rollback]: All attempts failed. The request status has been rolled back. 1781583051651
 
 ---
 
-### 📸 Execution & Visual Evidence
-*(Insert your project screenshots in this section to demonstrate your live output to the reviewer)*
+
